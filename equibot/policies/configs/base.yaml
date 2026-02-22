@@ -1,5 +1,5 @@
 prefix: default
-device: cuda
+device: cuda:0
 mode: train
 log_dir: logs/${mode}
 eval_data_path: null
@@ -99,5 +99,5 @@ hydra:
     dir: ${log_dir}/${prefix}
 
 wandb:
-  entity: [enter wandb entity name here]
-  project: [enter wandb project name here]
+  entity: null
+  project: equibot

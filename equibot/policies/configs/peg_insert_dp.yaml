@@ -1,0 +1,12 @@
+defaults:
+  - base
+
+env:
+  env_class: peg_insert
+  num_eef: 1
+  args:
+    num_eef: 1
+    max_episode_length: 200
+    vis: false
+    freq: 5
+    ac_noise: 0.0

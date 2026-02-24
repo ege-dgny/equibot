@@ -1,0 +1,12 @@
+defaults:
+  - base
+
+env:
+  env_class: pick_place
+  num_eef: 1
+  args:
+    num_eef: 1
+    max_episode_length: 60
+    vis: false
+    freq: 5
+    ac_noise: 0.0

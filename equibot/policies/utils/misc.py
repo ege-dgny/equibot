@@ -41,8 +41,23 @@ def get_env_class(env_name):
     elif env_name == "close":
         from equibot.envs.sim_mobile.closing_env import ClosingEnv
         return ClosingEnv
+    elif env_name == "pick_place":
+        from pefm_envs.sim_franka.pick_place_env import PickPlaceEnv
+        return PickPlaceEnv
+    elif env_name == "peg_insert":
+        from pefm_envs.sim_franka.peg_insert_env import PegInsertEnv
+        return PegInsertEnv
+    elif env_name == "centering":
+        from pefm_envs.sim_franka.centering_env import CenteringEnv
+        return CenteringEnv
+    elif env_name == "book_insert":
+        from pefm_envs.sim_franka.book_insert_env import BookInsertEnv
+        return BookInsertEnv
+    elif env_name == "push_t":
+        from pefm_envs.sim_franka.push_t_env import PushTEnv
+        return PushTEnv
     else:
-        raise ValueError()
+        raise ValueError(f"Environment [{env_name}] not found.")
 
 
 def get_dataset(cfg, mode="train"):

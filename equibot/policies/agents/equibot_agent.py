@@ -286,7 +286,7 @@ class EquiBotAgent(DPAgent):
         return fixed_state_dict
 
     def load_snapshot(self, save_path):
-        state_dict = torch.load(save_path)
+        state_dict = torch.load(save_path, map_location=self.device)
         self.state_normalizer = Normalizer(state_dict["state_normalizer"])
         self.actor.state_normalizer = self.state_normalizer
         self.ac_normalizer = Normalizer(state_dict["ac_normalizer"])

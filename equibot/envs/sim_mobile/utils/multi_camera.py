@@ -166,8 +166,7 @@ class MultiCamera:
                 lightColor=np.array([1.0, 1.0, 1.0]),
                 lightDistance=2.0,
                 shadow=1,
-                renderer=pybullet.ER_BULLET_HARDWARE_OPENGL,
-                # renderer=pybullet.ER_TINY_RENDERER,
+                renderer=pybullet.ER_TINY_RENDERER,
                 flags=pybullet.ER_SEGMENTATION_MASK_OBJECT_AND_LINKINDEX,
             )
             imgs.append(np.array(rgba_px).reshape(height, width, 4))

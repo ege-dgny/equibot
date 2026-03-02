@@ -1,0 +1,24 @@
+defaults:
+  - base
+
+env:
+  env_class: push_t_gym
+  num_eef: 1
+  dof: 2
+  eef_dim: 18
+  args:
+    num_eef: 1
+    dof: 2
+    max_episode_length: 300
+    obs_mode: state
+    ac_mode: abs
+
+model:
+  obs_mode: state
+  ac_mode: abs
+
+data:
+  dataset:
+    num_points: 1
+    min_demo_length: 10
+    shuffle_pc: false

@@ -23,6 +23,8 @@ class EquiBotAgent(DPAgent):
                 indices = [[0], [1, 2, 3], [4, 5, 6]]
             elif self.dof == 4:
                 indices = [[0], [1, 2, 3]]
+            elif self.dof == 2:
+                indices = [[0, 1]]
             else:
                 indices = None
             ac_normalizer = Normalizer(
@@ -37,7 +39,17 @@ class EquiBotAgent(DPAgent):
             print(f"Action normalization stats: {self.ac_normalizer.stats}")
         if self.state_normalizer is None:
             # dof layout: maybe gripper open/close, xyz, maybe rot
-            if self.dof == 3:
+            if self.dof == 2:
+                # 2D actions are padded to 3D vectors internally, so the
+                # state normalizer needs 3D stats; pad z with matching range.
+                dev = ac_normalizer.stats["min"].device
+                self.state_normalizer = Normalizer({
+                    "min": torch.cat([ac_normalizer.stats["min"],
+                                      torch.zeros(1, device=dev)]),
+                    "max": torch.cat([ac_normalizer.stats["max"],
+                                      ac_normalizer.stats["max"][:1]]),
+                })
+            elif self.dof == 3:
                 self.state_normalizer = ac_normalizer
             else:
                 self.state_normalizer = Normalizer(
@@ -122,7 +134,7 @@ class EquiBotAgent(DPAgent):
                     [gt_action[..., :1], (gt_action[..., 1:] - center) / scale], dim=-1
                 )
                 gt_action = gt_action.reshape(B, Hp, -1)
-            elif self.dof == 3:
+            elif self.dof in [2, 3]:
                 gt_action = (gt_action - center) / scale
             elif self.dof == 7:
                 gt_action = torch.cat(

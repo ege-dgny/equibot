@@ -52,18 +52,22 @@ class EquiBotPolicy(nn.Module):
         self.eef_dim = cfg.env.eef_dim
         self.dof = cfg.env.dof
         if cfg.model.obs_mode == "state":
-            self.obs_dim = self.num_eef * (self.eef_dim // 3)
+            if self.dof == 2:
+                self.obs_dim = self.num_eef * (self.eef_dim // 2)
+            else:
+                self.obs_dim = self.num_eef * (self.eef_dim // 3)
         elif cfg.model.obs_mode == "rgb":
             raise NotImplementedError()
         else:
-            self.obs_dim = self.encoder_out_dim + self.num_eef * (self.eef_dim // 3)
+            state_vec_dim = self.eef_dim // 2 if self.dof == 2 else self.eef_dim // 3
+            self.obs_dim = self.encoder_out_dim + self.num_eef * state_vec_dim
         self.action_dim = (2 if self.dof > 4 else 1) * self.num_eef
 
-        num_scalar_dims = (0 if self.dof == 3 else 1) * self.num_eef
+        num_scalar_dims = (0 if self.dof in [2, 3] else 1) * self.num_eef
         self.noise_pred_net = VecConditionalUnet1D(
             input_dim=self.action_dim,
             cond_dim=self.obs_dim * self.obs_horizon,
-            scalar_cond_dim=(0 if self.dof == 3 else self.num_eef * self.obs_horizon),
+            scalar_cond_dim=(0 if self.dof in [2, 3] else self.num_eef * self.obs_horizon),
             scalar_input_dim=num_scalar_dims,
             diffusion_step_embed_dim=self.obs_dim * self.obs_horizon,
             cond_predict_scale=True,
@@ -94,7 +98,12 @@ class EquiBotPolicy(nn.Module):
         # state format for 7d actions: eef_pos, eef_rot_x, eef_rot_z, gravity_dir, gripper_pose, [optional] goal_pos
         # input: (B, H, E * eef_dim)
         # output: (B, H, ?, 3) [need norm] + (B, H, ?, 3) [does not need norm] + maybe (B, H, E)
-        if self.dof == 3:
+        if self.dof == 2:
+            B, H = state.shape[0], state.shape[1]
+            flat = state.view(B, H, -1, 2)
+            padded = torch.nn.functional.pad(flat, (0, 1))
+            return padded, None, None
+        elif self.dof == 3:
             return state.view(state.shape[0], state.shape[1], -1, 3), None, None
         elif self.dof == 4:
             state = state.view(state.shape[0], state.shape[1], self.num_eef, -1)
@@ -139,6 +148,9 @@ class EquiBotPolicy(nn.Module):
             return eef_ac.permute(0, 2, 3, 1), gripper_ac.permute(0, 2, 1)
         elif self.dof == 3:
             return ac.permute(0, 2, 3, 1), None
+        elif self.dof == 2:
+            ac_padded = torch.nn.functional.pad(ac, (0, 1))
+            return ac_padded.permute(0, 2, 3, 1), None
         else:
             raise ValueError(f"Cannot handle dof = {self.dof}")
 
@@ -160,6 +172,10 @@ class EquiBotPolicy(nn.Module):
             scalar_ac = eef_ac.reshape(eef_ac.shape[0], -1, eef_ac.shape[-1]).permute(
                 0, 2, 1
             )
+        elif self.dof == 2:
+            scalar_ac = eef_ac[..., :2, :].reshape(
+                eef_ac.shape[0], -1, eef_ac.shape[-1]
+            ).permute(0, 2, 1)
         else:
             raise ValueError(f"Cannot handle dof = {self.dof}")
         return scalar_ac
@@ -273,7 +289,7 @@ class EquiBotPolicy(nn.Module):
             action = action.reshape(B, Hp, E, self.dof)
             if self.dof == 4:
                 action[..., 1:] = action[..., 1:] * scale + center
-            elif self.dof == 3:
+            elif self.dof in [2, 3]:
                 action = action * scale + center
             elif self.dof == 7:
                 action[..., 1:4] = action[..., 1:4] * scale + center

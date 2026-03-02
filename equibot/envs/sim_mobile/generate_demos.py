@@ -459,10 +459,10 @@ def get_args(parent=None):
     )
     parser.add_argument("--seed", type=int, default=0, help="Random seed")
     parser.add_argument(
-        "--seed_env", type=int, default=666, help="Random seed for environment"
+        "--seed_env", type=int, default=0, help="Random seed for environment"
     )
     parser.add_argument(
-        "--seed_cam", type=int, default=66666, help="Random seed for camera"
+        "--seed_cam", type=int, default=0, help="Random seed for camera"
     )
     # Simulation args. Note: turn up frequency when deform stiffness is high.
     parser.add_argument(

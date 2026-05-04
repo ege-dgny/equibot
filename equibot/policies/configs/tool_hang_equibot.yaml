@@ -1,0 +1,13 @@
+defaults:
+  - tool_hang_dp
+
+agent:
+  agent_name: equibot
+
+model:
+  encoder:
+    backbone_type: vn_pointnet
+
+wandb:
+  entity: null
+  project: equibot

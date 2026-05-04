@@ -69,7 +69,7 @@ def main(cfg):
     env_args = dict(OmegaConf.to_container(cfg.env.args, resolve=True))
 
     def create_env(env_args, i):
-        env_args.seed = cfg.seed * 100 + i
+        env_args["seed"] = cfg.seed * 100 + i
         return env_class(OmegaConf.create(env_args))
 
     if cfg.training.eval_interval <= cfg.training.num_epochs:

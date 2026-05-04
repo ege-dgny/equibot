@@ -4,11 +4,33 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from pytorch3d.ops.knn import knn_points
 import logging
 
 from equibot.policies.vision.vec_layers import VecLinear
 from equibot.policies.vision.vec_layers import VecLinNormAct as VecLNA
+
+
+def knn_points(
+    xq: torch.Tensor,
+    xp: torch.Tensor,
+    K: int,
+    return_nn: bool = False,
+):
+    """Torch-native drop-in for pytorch3d.ops.knn_points.
+
+    xq: (B, N, D) query points, xp: (B, M, D) reference points.
+    Returns (dists, idx, neighbors) matching pytorch3d signature.
+    """
+    dists_sq = torch.cdist(xq, xp, p=2) ** 2
+    dists, idx = dists_sq.topk(K, dim=-1, largest=False)
+    neighbors = None
+    if return_nn:
+        B, N, _ = xq.shape
+        D = xp.shape[-1]
+        gather_idx = idx.unsqueeze(-1).expand(-1, -1, -1, D)
+        xp_expand = xp.unsqueeze(1).expand(-1, N, -1, -1)
+        neighbors = torch.gather(xp_expand, 2, gather_idx)
+    return dists, idx, neighbors
 
 
 def meanpool(x, dim=-1, keepdim=False):

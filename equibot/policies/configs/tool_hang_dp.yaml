@@ -1,0 +1,25 @@
+defaults:
+  - base
+
+env:
+  env_class: tool_hang
+  num_eef: 1
+  dof: 7
+  eef_dim: 13
+  args:
+    num_eef: 1
+    dof: 7
+    max_episode_length: 700
+    freq: 20
+    randomize_rotation: true
+
+training:
+  batch_size: 256
+  num_epochs: 3000
+  lr: 2.4e-4
+  eval_interval: 300
+  save_interval: 100
+
+wandb:
+  entity: null
+  project: dp

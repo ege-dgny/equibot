@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 setup(name="equibot",
@@ -7,7 +7,7 @@ setup(name="equibot",
       author="",
       author_email="",
       license="",
-      packages=[],
+      packages=find_packages(),
       install_requires=[
           "click",
           "matplotlib",

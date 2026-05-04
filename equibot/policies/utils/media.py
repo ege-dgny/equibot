@@ -6,8 +6,13 @@ Utilities for loading, saving, and manipulating videos and images.
 """
 
 import os
+import sys
 import numpy as np
 import cv2
+import skvideo
+_env_bin = os.path.dirname(sys.executable)
+if os.path.exists(os.path.join(_env_bin, "ffmpeg")):
+    skvideo.setFFmpegPath(_env_bin)
 import skvideo.io
 import imageio
 

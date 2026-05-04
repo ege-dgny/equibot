@@ -1,0 +1,13 @@
+defaults:
+  - nut_assembly_fixed_dp
+
+agent:
+  agent_name: equibot
+
+model:
+  encoder:
+    backbone_type: vn_pointnet
+
+wandb:
+  entity: null
+  project: equibot

@@ -1,0 +1,25 @@
+defaults:
+  - base
+
+env:
+  env_class: pick_place_fixed
+  num_eef: 1
+  dof: 7
+  eef_dim: 13
+  args:
+    num_eef: 1
+    dof: 7
+    max_episode_length: 200
+    freq: 20
+    randomize_rotation: true
+
+training:
+  batch_size: 256
+  num_epochs: 2000
+  lr: 2.4e-4
+  eval_interval: 200
+  save_interval: 50
+
+wandb:
+  entity: null
+  project: dp

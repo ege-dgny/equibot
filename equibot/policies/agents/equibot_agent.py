@@ -220,10 +220,7 @@ class EquiBotAgent(DPAgent):
         else:
             loss = nn.functional.mse_loss(noise_pred, noise)
         if torch.isnan(loss):
-            print(f"Loss is nan, please investigate.")
-            import pdb
-
-            pdb.set_trace()
+            raise RuntimeError("Loss is NaN — likely LR too high or numerical blowup")
 
         self.optimizer.zero_grad()
         loss.backward()

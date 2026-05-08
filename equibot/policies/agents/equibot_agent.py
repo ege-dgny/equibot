@@ -52,14 +52,19 @@ class EquiBotAgent(DPAgent):
             elif self.dof == 3:
                 self.state_normalizer = ac_normalizer
             else:
-                self.state_normalizer = Normalizer(
-                    {
-                        "min": ac_normalizer.stats["min"][1:4],
-                        "max": ac_normalizer.stats["max"][1:4],
-                    }
-                )
+                # Robomimic dof=7: derive xyz stats from data, not from the
+                # action range. After OSC-input scaling actions live in
+                # ±1, which collapses pc/state normalization to identity
+                # against absolute world coords. PC points share the same
+                # world frame as z_pos, so PC-derived stats are correct
+                # for both. (See EquiBot paper §3.1; sim_mobile envs feed
+                # object-only PCs whose stats are similar to action range.)
+                flattened_pc = batch["pc"].reshape(-1, 3)
+                self.state_normalizer = Normalizer(flattened_pc, symmetric=False)
             self.actor.state_normalizer = self.state_normalizer
         if self.pc_normalizer is None:
+            # dof=7 reuses the PC-derived state_normalizer (same world frame);
+            # dof=2/3 keep the legacy state_normalizer which was action-derived.
             self.pc_normalizer = self.state_normalizer
             self.actor.pc_normalizer = self.pc_normalizer
 

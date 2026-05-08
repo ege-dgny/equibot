@@ -56,6 +56,7 @@ def run_eval(
         ac_horizon = 1
         pred_horizon = 1
 
+    dof = getattr(agent, "dof", 7)
     images, rews = [], []
     for ep_ix in range(num_episodes):
         images.append([])
@@ -70,6 +71,10 @@ def run_eval(
 
         if ep_ix == 0:
             sample_pc = render["pc"]
+
+        # Gripper hysteresis state (parity with PEFM eval).
+        if dof > 2:
+            grip_state = float(np.array(obs["state"]).reshape(-1)[-1])
 
         done = False
         global_features = None
@@ -117,6 +122,15 @@ def run_eval(
                     ac_dict = None
                     break
                 agent_ac = ac[ac_ix] if len(ac.shape) > 1 else ac
+                agent_ac = np.array(agent_ac, copy=True)
+                # Gripper latch (parity with PEFM eval): hold last commanded
+                # state through mid-transition outputs.
+                if dof > 2:
+                    if agent_ac[0] > 0.9:
+                        grip_state = 1.0
+                    elif agent_ac[0] < 0.1:
+                        grip_state = 0.0
+                    agent_ac[0] = grip_state
                 state, rew, done, info = env.step(agent_ac, dummy_reward=True)
                 if hasattr(env, "visualize_eef_frame"):
                     env.visualize_eef_frame(state)

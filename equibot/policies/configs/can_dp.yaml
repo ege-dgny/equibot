@@ -1,0 +1,32 @@
+defaults:
+  - base
+
+env:
+  env_class: can
+  num_eef: 1
+  dof: 7
+  eef_dim: 13
+  args:
+    num_eef: 1
+    dof: 7
+    max_episode_length: 400
+    freq: 20
+    randomize_rotation: false
+    cam_resolution: 256
+
+data:
+  dataset:
+    num_points: 256
+    num_demos: 100
+
+training:
+  batch_size: 256
+  num_epochs: 2000
+  lr: 2.4e-4
+  num_eval_episodes: 150
+  eval_interval: 200
+  save_interval: 50
+
+wandb:
+  entity: null
+  project: dp

@@ -50,13 +50,6 @@ def run_eval(
     sample_pc = render[0]["pc"]
     mean_num_points_in_pc = np.mean([len(render[k]["pc"]) for k in range(len(render))])
 
-    # Gripper hysteresis (parity with PEFM eval).
-    dof = getattr(agent, "dof", 7)
-    if dof > 2:
-        grip_state = np.array(obs["state"])[..., -1].reshape(num_envs, -1)[:, -1].astype(
-            np.float32
-        )
-
     done = [False] * num_envs
     if log_dir is not None:
         history = []
@@ -95,16 +88,6 @@ def run_eval(
         # take actions
         for ac_ix in range(ac_horizon):
             agent_ac = ac[:, ac_ix] if len(ac.shape) > 2 else ac
-            agent_ac = np.array(agent_ac, copy=True)
-            # Gripper latch: parity with PEFM vec_eval. Holds last commanded
-            # state through mid-transition outputs (flow/diffusion samples
-            # rarely sit exactly at 0 or 1).
-            if dof > 2:
-                close_mask = agent_ac[:, 0] > 0.9
-                open_mask = agent_ac[:, 0] < 0.1
-                grip_state[close_mask] = 1.0
-                grip_state[open_mask] = 0.0
-                agent_ac[:, 0] = grip_state
             env.step_async(agent_ac, dummy_reward=True)
             state, _, done, _ = env.step_wait()
             rgb_render = render = env.env_method("render")

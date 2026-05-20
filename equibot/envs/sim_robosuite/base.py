@@ -1,4 +1,25 @@
+import logging
+import sys
+import types
+
 import numpy as np
+
+
+def _suppress_sim_import_chatter():
+    """Silence gym deprecation notices and robosuite startup logger chatter."""
+    gym_notices = types.ModuleType("gym_notices")
+    gym_notices_notices = types.ModuleType("gym_notices.notices")
+    gym_notices_notices.notices = {}
+    gym_notices.notices = gym_notices_notices
+    sys.modules.setdefault("gym_notices", gym_notices)
+    sys.modules.setdefault("gym_notices.notices", gym_notices_notices)
+
+    logging.getLogger("robosuite_logs").disabled = True
+    logging.getLogger("robosuite_logs").setLevel(logging.CRITICAL + 1)
+
+
+_suppress_sim_import_chatter()
+
 import gym
 
 

@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+import xml.etree.ElementTree as ET
 from types import SimpleNamespace
 
 import numpy as np
@@ -64,10 +65,40 @@ def robosuite_to_equibot_action(action, dof=7):
     return out
 
 
+def _repair_robosuite_asset_paths(xml):
+    """Patch stale robosuite asset paths found in older Robomimic XML demos."""
+    root = ET.fromstring(xml)
+    asset = root.find("asset")
+    if asset is None:
+        return xml
+
+    replacements = (
+        ("/models/assets/mounts/meshes/", "/models/assets/bases/meshes/"),
+        ("/models/assets/mounts/", "/models/assets/bases/"),
+    )
+    changed = False
+    for elem in list(asset.findall("mesh")) + list(asset.findall("texture")):
+        path = elem.get("file")
+        if path is None or os.path.exists(path):
+            continue
+        for old, new in replacements:
+            if old in path:
+                candidate = path.replace(old, new)
+                if os.path.exists(candidate):
+                    elem.set("file", candidate)
+                    changed = True
+                    break
+
+    if not changed:
+        return xml
+    return ET.tostring(root, encoding="utf8").decode("utf8")
+
+
 def _restore_demo_xml(env, model_xml):
     env.env.reset()
     if model_xml is not None:
         xml = env.env.edit_model_xml(model_xml) if hasattr(env.env, "edit_model_xml") else model_xml
+        xml = _repair_robosuite_asset_paths(xml)
         env.env.reset_from_xml_string(xml)
         env.env.sim.reset()
 
@@ -122,7 +153,10 @@ def convert_dataset(args):
         for ep_ix, demo_name in enumerate(demos):
             demo = data[demo_name]
             states, actions = _load_states_actions(demo)
-            _restore_demo_xml(env, _model_xml(demo))
+            if args.skip_model_xml:
+                env.env.reset()
+            else:
+                _restore_demo_xml(env, _model_xml(demo))
 
             horizon = min(len(states), len(actions))
             if args.max_steps_per_demo is not None:
@@ -177,6 +211,11 @@ def parse_args():
     parser.add_argument("--robots", default="Panda")
     parser.add_argument("--controller", default="OSC_POSE")
     parser.add_argument("--skip_empty_pc", action="store_true")
+    parser.add_argument(
+        "--skip_model_xml",
+        action="store_true",
+        help="Do not replay per-demo model XML before restoring states. Useful for older Robomimic XMLs with stale robosuite asset/site names.",
+    )
     return parser.parse_args()
 
 

@@ -247,6 +247,15 @@ class RobosuitePointCloudEnv:
         points = (extr @ cam_points).T[:, :3]
 
         points = np.asarray(points, dtype=np.float32).reshape(-1, 3)
+        # Workspace-bounds clamp: drop far-plane/background pixels (depth~1 -> huge
+        # world coords) that the object-seg mask occasionally leaks. Without this,
+        # render glitches inject garbage points (e.g. x~-265) that wreck the cloud.
+        ws = (
+            (points[:, 2] > 0.78) & (points[:, 2] < 1.3)
+            & (points[:, 0] > -0.5) & (points[:, 0] < 0.8)
+            & (points[:, 1] > -0.6) & (points[:, 1] < 0.6)
+        )
+        points = points[ws]
         points = self._crop_object_points(points)
         if len(points) == 0:
             return points
